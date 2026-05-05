@@ -124,21 +124,24 @@ npx http-server . -p 8080 --cors
 # Then visit http://localhost:8080
 ```
 
-### Option 3: With Salesforce integration
+### Option 3: With Salesforce Integration (Local Only)
+
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Create a .env file with your Salesforce credentials
-#    SF_CLIENT_ID=your_connected_app_client_id
-#    SF_CLIENT_SECRET=your_connected_app_client_secret
-#    SF_REDIRECT_URI=http://localhost:3000/callback.html
+# 2. Open callback.html and replace placeholders with your credentials
+#    CLIENT_ID = 'your_connected_app_client_id'
+#    CLIENT_SECRET = 'your_connected_app_client_secret'
 
 # 3. Start the proxy server
 node server.js
 
 # 4. Visit http://localhost:3000 and click "Connect to Salesforce"
 ```
+
+> ⚠️ Requires your own Salesforce Connected App credentials.  
+> Works with any Salesforce org that has CPQ installed.
 
 ---
 
