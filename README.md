@@ -19,6 +19,20 @@
 > Simply click the link above to explore the live portal — no installation needed!
 
 ---
+## ⚡ Demo vs Live Mode
+
+| Mode | Where | Data Source |
+|------|-------|-------------|
+| 🔵 **Demo Mode** | GitHub Pages (this link) | Built-in mock data — no setup needed |
+| 🟢 **Live Mode** | Localhost only | Real Salesforce org via OAuth 2.0 |
+
+> **GitHub Pages** shows fully functional portal with realistic B2B mock data  
+> (Infosys, TCS, Wipro accounts with quotes, approvals, and analytics).
+>
+> **For a live Salesforce demo** — clone the repo, add your Connected App credentials,  
+> run `node server.js` and connect via OAuth. All CPQ data loads from a real Salesforce org.
+>
+> 📩 Want to see the live demo? Contact me on GitHub.
 
 ## 📋 What is QuoteFlow Pro?
 
