@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="QuoteFlow Pro by NovaSync Solutions — A powerful Salesforce CPQ frontend portal for streamlined quoting, pricing, and approvals.">
+  <title>QuoteFlow Pro — NovaSync Solutions CPQ Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- ── Navbar ──────────────────────────────────────────── -->
+  <nav class="navbar" id="main-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand">
+        <div class="brand-icon"><i data-lucide="bolt"></i></div>
+        QuoteFlow Pro
+      </a>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="calculator.html" class="nav-link">Calculator</a></li>
+        <li><a href="approval.html" class="nav-link">Approvals</a></li>
+        <li><a href="dashboards.html" class="nav-link">Dashboard</a></li>
+        <li><a href="customers.html" class="nav-link">Customers</a></li>
+        <li><a href="configuration.html" class="nav-link">Configuration</a></li>
+      </ul>
+      <button id="connectBtn" class="btn btn-primary" style="font-size:13px;padding:8px 16px;">
+        Connect to Salesforce
+      </button>
+      <button class="nav-toggle" id="nav-toggle">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Hero Section ────────────────────────────────────── -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i data-lucide="sparkles" style="width:14px;height:14px"></i>
+          Salesforce CPQ Powered
+        </div>
+        <h1>
+          Streamline Your B2B<br>
+          <span class="gradient-text">Quote-to-Cash</span> Pipeline
+        </h1>
+        <p>
+          NovaSync Solutions' QuoteFlow Pro transforms complex B2B quoting into a seamless, automated experience — from product configuration to pricing, discounting, and multi-level approvals.
+        </p>
+        <div class="hero-buttons">
+          <a href="catalog.html" class="btn btn-primary btn-lg">
+            <i data-lucide="layout-grid" style="width:18px;height:18px"></i>
+            Explore Catalog
+          </a>
+          <a href="calculator.html" class="btn btn-secondary btn-lg">
+            <i data-lucide="calculator" style="width:18px;height:18px"></i>
+            Build a Quote
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats Bar ───────────────────────────────────────── -->
+  <section class="section">
+    <div class="container">
+      <div class="stats-bar fade-in">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-revenue" data-counter="9223900" data-format="currency">$0</div>
+          <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-quotes" data-counter="7">0</div>
+          <div class="stat-label">Quotes Generated</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-margin" data-counter="28" data-format="percent">0%</div>
+          <div class="stat-label">Avg Margin</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-products" data-counter="4">0</div>
+          <div class="stat-label">Products</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CPQ Modules ─────────────────────────────────────── -->
+  <section class="section" style="background: var(--bg);">
+    <div class="container">
+      <div class="section-header fade-in">
+        <div class="section-label">Platform Modules</div>
+        <h2 class="section-title">Everything You Need to Quote Smarter</h2>
+        <p class="section-subtitle">Six integrated modules working together to automate your entire quote-to-cash workflow.</p>
+      </div>
+      <div class="grid-3 fade-in" id="modules-grid"></div>
+    </div>
+  </section>
+
+  <!-- ── Recent Quotes ───────────────────────────────────── -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <div class="section-label">Recent Activity</div>
+        <h2 class="section-title">Latest Quotes</h2>
+        <p class="section-subtitle">Track the most recent quotes across all customers and products.</p>
+      </div>
+      <div class="table-wrapper fade-in">
+        <div class="table-header">
+          <h3>Recent Quotes</h3>
+          <a href="approval.html" class="btn btn-sm btn-outline">View All →</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Quote #</th>
+              <th>Customer</th>
+              <th>Product</th>
+              <th>Amount</th>
+              <th>Discount</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="recent-quotes-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ──────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text">
+        &copy; 2026 <strong>NovaSync Solutions</strong> — QuoteFlow Pro. Built with Salesforce CPQ.
+      </div>
+      <div class="footer-links">
+        <a href="catalog.html">Catalog</a>
+        <a href="calculator.html">Calculator</a>
+        <a href="approval.html">Approvals</a>
+        <a href="dashboards.html">Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script>
+    function renderModules() {
+      const grid = document.getElementById("modules-grid");
+      const iconColors = ["primary", "info", "success", "warning", "primary", "info"];
+      grid.innerHTML = MODULES.map((mod, i) => `
+        <a href="${mod.link}" class="card" style="text-decoration:none">
+          <div class="card-icon ${iconColors[i]}">
+            <i data-lucide="${mod.icon}"></i>
+          </div>
+          <h3>${mod.title}</h3>
+          <p>${mod.description}</p>
+        </a>
+      `).join("");
+      lucide.createIcons();
+    }
+
+    function renderRecentQuotes() {
+      const tbody = document.getElementById("recent-quotes-table");
+      const recent = QUOTES.slice(0, 5);
+      const statusClass = { "Draft":"badge-draft", "In Review":"badge-review", "Approved":"badge-approved", "Rejected":"badge-rejected" };
+      tbody.innerHTML = recent.map(q => {
+        return `
+        <tr>
+          <td><strong>${q.id}</strong></td>
+          <td>${q.customer}</td>
+          <td>${q.product}</td>
+          <td>${formatCurrency(q.netAmount)}</td>
+          <td>${q.additionalDiscount || 0}%</td>
+          <td><span class="badge ${statusClass[q.status]}">${q.status}</span></td>
+          <td>${formatDate(q.submittedDate)}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await tryLoadLiveData();
+      renderModules();
+      renderRecentQuotes();
+      initStatCounters();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

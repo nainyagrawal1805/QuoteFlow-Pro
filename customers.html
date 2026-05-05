@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="QuoteFlow Pro Customer Accounts — View all NovaSync client accounts, quote history, and revenue analytics per customer.">
+  <title>Customer Accounts — QuoteFlow Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <nav class="navbar" id="main-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand"><div class="brand-icon"><i data-lucide="bolt"></i></div>QuoteFlow Pro</a>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="calculator.html" class="nav-link">Calculator</a></li>
+        <li><a href="approval.html" class="nav-link">Approvals</a></li>
+        <li><a href="dashboards.html" class="nav-link">Dashboard</a></li>
+        <li><a href="customers.html" class="nav-link">Customers</a></li>
+        <li><a href="configuration.html" class="nav-link">Configuration</a></li>
+      </ul>
+      <button class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Customer Accounts</span></div>
+      <h1>Customer Accounts</h1>
+      <p style="color: var(--text-on-dark); opacity: 0.8; font-size: var(--fs-md); margin-top: var(--space-sm); position: relative;">Manage and view all NovaSync client accounts</p>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      <div class="grid-3 fade-in" id="customer-grid"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text">&copy; 2026 <strong>NovaSync Solutions</strong> — QuoteFlow Pro. Built with Salesforce CPQ.</div>
+      <div class="footer-links">
+        <a href="catalog.html">Catalog</a><a href="calculator.html">Calculator</a><a href="approval.html">Approvals</a><a href="dashboards.html">Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script>
+    function getCustomerStats(customer) {
+      // Match by customerId OR by customer name (for live data where customerId may be empty)
+      const custQuotes = QUOTES.filter(q =>
+        q.customerId === customer.id ||
+        q.customer.toLowerCase().includes(customer.name.toLowerCase())
+      );
+      const totalQuotes = custQuotes.length;
+      const totalRevenue = custQuotes.reduce((s, q) => s + q.netAmount, 0);
+      const avgDiscount = totalQuotes > 0
+        ? (custQuotes.reduce((s, q) => s + (q.additionalDiscount || 0), 0) / totalQuotes).toFixed(1)
+        : 0;
+      const statusCounts = {
+        Approved: custQuotes.filter(q => q.status === "Approved").length,
+        "In Review": custQuotes.filter(q => q.status === "In Review").length,
+        Rejected: custQuotes.filter(q => q.status === "Rejected").length,
+        Draft: custQuotes.filter(q => q.status === "Draft").length
+      };
+      return { totalQuotes, totalRevenue, avgDiscount, statusCounts };
+    }
+
+    const tierColors = { Enterprise: "var(--accent)", Pro: "var(--info)" };
+    const tierBg = { Enterprise: "var(--accent-glow)", Pro: "var(--info-light)" };
+    const statusBadge = {
+      Approved: "badge-approved",
+      "In Review": "badge-review",
+      Rejected: "badge-rejected",
+      Draft: "badge-draft"
+    };
+
+    function renderCustomers() {
+      const grid = document.getElementById("customer-grid");
+      grid.innerHTML = CUSTOMERS.map(cust => {
+        const stats = getCustomerStats(cust);
+        const statusBadges = Object.entries(stats.statusCounts)
+          .filter(([, count]) => count > 0)
+          .map(([status, count]) => `<span class="badge ${statusBadge[status]}" style="font-size:0.7rem;">${count} ${status}</span>`)
+          .join("");
+
+        return `<div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar" style="background:${tierBg[cust.tier] || 'var(--accent-glow)'}; color:${tierColors[cust.tier] || 'var(--accent)'};">
+              <i data-lucide="building-2" style="width:24px;height:24px"></i>
+            </div>
+            <div>
+              <h3 class="customer-name">${cust.name}</h3>
+              <span class="customer-industry-badge"><i data-lucide="briefcase" style="width:12px;height:12px"></i> ${cust.industry}</span>
+            </div>
+          </div>
+
+          <div class="customer-tier-row">
+            <span class="customer-tier-badge" style="background:${tierBg[cust.tier] || 'var(--accent-glow)'}; color:${tierColors[cust.tier] || 'var(--accent)'};">${cust.tier}</span>
+          </div>
+
+          <div class="customer-divider"></div>
+
+          <div class="customer-stats-grid">
+            <div class="customer-stat">
+              <div class="customer-stat-value">${stats.totalQuotes}</div>
+              <div class="customer-stat-label">Total Quotes</div>
+            </div>
+            <div class="customer-stat">
+              <div class="customer-stat-value">${formatCurrency(stats.totalRevenue)}</div>
+              <div class="customer-stat-label">Total Revenue</div>
+            </div>
+            <div class="customer-stat">
+              <div class="customer-stat-value">${stats.avgDiscount}%</div>
+              <div class="customer-stat-label">Avg Discount</div>
+            </div>
+          </div>
+
+          <div class="customer-status-row">${statusBadges}</div>
+
+          <a href="approval.html?customer=${encodeURIComponent(cust.name)}" class="btn btn-accent customer-view-btn">
+            <i data-lucide="external-link" style="width:16px;height:16px"></i> View Quotes
+          </a>
+        </div>`;
+      }).join("");
+      lucide.createIcons();
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await tryLoadLiveData();
+      renderCustomers();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

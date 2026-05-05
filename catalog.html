@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="QuoteFlow Pro Product Catalog — Browse and compare Basic, Pro, Enterprise, and Support packages.">
+  <title>Product Catalog — QuoteFlow Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <nav class="navbar" id="main-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand"><div class="brand-icon"><i data-lucide="bolt"></i></div>QuoteFlow Pro</a>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="calculator.html" class="nav-link">Calculator</a></li>
+        <li><a href="approval.html" class="nav-link">Approvals</a></li>
+        <li><a href="dashboards.html" class="nav-link">Dashboard</a></li>
+        <li><a href="customers.html" class="nav-link">Customers</a></li>
+        <li><a href="configuration.html" class="nav-link">Configuration</a></li>
+      </ul>
+      <button class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Product Catalog</span></div>
+      <h1>Product Catalog</h1>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <div class="section-label">Our Products</div>
+        <h2 class="section-title">Choose the Right Plan for Your Business</h2>
+        <p class="section-subtitle">From startups to enterprise — scalable CPQ solutions that grow with your quoting needs.</p>
+      </div>
+      <div class="grid-4 fade-in" id="product-grid"></div>
+      <div class="info-banner fade-in" style="margin-top: var(--space-3xl);">
+        <div class="info-icon"><i data-lucide="percent"></i></div>
+        <div>
+          <h4>Volume Discount Tiers</h4>
+          <p>Order <strong>100–499 units</strong> to unlock <strong>10% off</strong>, or <strong>500+ units</strong> for <strong>20% off</strong>. Volume discounts are automatically applied in the Quote Calculator.</p>
+        </div>
+      </div>
+      <div class="comparison-table fade-in">
+        <div class="section-header" style="margin-top: var(--space-3xl);">
+          <div class="section-label">Feature Comparison</div>
+          <h2 class="section-title">Compare Plans Side by Side</h2>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Feature</th><th>Basic Plan</th><th>Pro Plan</th><th>Enterprise Plan</th></tr></thead>
+            <tbody>
+              <tr><td>Monthly Quotes</td><td>50</td><td>Unlimited</td><td>Unlimited</td></tr>
+              <tr><td>Product Bundles</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>Tiered Pricing</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>Approval Workflows</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>Multi-Currency</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>API Access</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>Analytics &amp; Forecasting</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>Custom Approval Chains</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>SSO &amp; Audit Logs</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>Dedicated Account Manager</td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="cross"><i data-lucide="x" style="width:16px;height:16px"></i></td><td class="check"><i data-lucide="check" style="width:16px;height:16px"></i></td></tr>
+              <tr><td>Support Level</td><td>Email</td><td>Priority</td><td>Dedicated 24/7</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text">&copy; 2026 <strong>NovaSync Solutions</strong> — QuoteFlow Pro. Built with Salesforce CPQ.</div>
+      <div class="footer-links">
+        <a href="catalog.html">Catalog</a><a href="calculator.html">Calculator</a><a href="approval.html">Approvals</a><a href="dashboards.html">Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script>
+    const PRODUCT_ICONS = {"Basic Plan":"package","Pro Plan":"zap","Enterprise Plan":"shield","Support Package":"headphones"};
+    function renderProducts() {
+      const grid = document.getElementById("product-grid");
+      grid.innerHTML = PRODUCTS.map(prod => {
+        const isHighlighted = prod.badge === "Best Value";
+        const icon = PRODUCT_ICONS[prod.name] || "box";
+        return `<div class="product-card ${isHighlighted ? 'highlighted' : ''}">
+          ${prod.badge ? `<span class="tier-badge product-badge">${prod.badge}</span>` : ''}
+          <div class="product-icon"><i data-lucide="${icon}" style="width:28px;height:28px"></i></div>
+          <div class="product-name">${prod.name}</div>
+          <div class="product-price">${formatCurrency(prod.price)} <span>/license</span></div>
+          <p class="product-description">${prod.description}</p>
+          <ul class="feature-list">${prod.features.map(f => `<li><i data-lucide="check-circle" style="width:16px;height:16px"></i>${f}</li>`).join("")}</ul>
+          <a href="calculator.html?product=${prod.id}" class="btn btn-accent" style="width:100%"><i data-lucide="plus" style="width:16px;height:16px"></i> Add to Quote</a>
+        </div>`;
+      }).join("");
+      lucide.createIcons();
+    }
+    document.addEventListener("DOMContentLoaded", async () => { await tryLoadLiveData(); renderProducts(); lucide.createIcons(); });
+  </script>
+</body>
+</html>

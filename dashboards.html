@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="QuoteFlow Pro Analytics Dashboard — Revenue, discount, margin, and trend analytics powered by Chart.js.">
+  <title>Analytics Dashboard — QuoteFlow Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <nav class="navbar" id="main-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand"><div class="brand-icon"><i data-lucide="bolt"></i></div>QuoteFlow Pro</a>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="calculator.html" class="nav-link">Calculator</a></li>
+        <li><a href="approval.html" class="nav-link">Approvals</a></li>
+        <li><a href="dashboards.html" class="nav-link">Dashboard</a></li>
+        <li><a href="customers.html" class="nav-link">Customers</a></li>
+        <li><a href="configuration.html" class="nav-link">Configuration</a></li>
+      </ul>
+      <button class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Analytics Dashboard</span></div>
+      <h1>Analytics Dashboard</h1>
+    </div>
+  </div>
+
+  <section class="section" style="padding-bottom: 0;">
+    <div class="container">
+      <div class="kpi-grid fade-in">
+        <div class="kpi-card"><div class="kpi-label">Total Revenue</div><div class="kpi-value" id="kpi-revenue">$0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg Discount</div><div class="kpi-value" id="kpi-discount">0%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg Margin</div><div class="kpi-value" id="kpi-margin">0%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Quotes</div><div class="kpi-value" id="kpi-quotes">0</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="chart-grid fade-in">
+        <div class="chart-card">
+          <h3><i data-lucide="pie-chart" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Quotes by Status</h3>
+          <canvas id="chart-status"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3><i data-lucide="bar-chart-3" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Margin by Opportunity</h3>
+          <canvas id="chart-margin"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3><i data-lucide="users" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Revenue by Account</h3>
+          <canvas id="chart-account"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3><i data-lucide="bar-chart-3" style="width:16px;height:16px;vertical-align:middle;margin-right:6px"></i>Revenue by Product</h3>
+          <canvas id="chart-revenue"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text">&copy; 2026 <strong>NovaSync Solutions</strong> — QuoteFlow Pro. Built with Salesforce CPQ.</div>
+      <div class="footer-links">
+        <a href="catalog.html">Catalog</a><a href="calculator.html">Calculator</a><a href="approval.html">Approvals</a><a href="dashboards.html">Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script>
+    const COLORS = {
+      primary: '#505081', primaryLight: '#6B6BA3', success: '#00C48C',
+      warning: '#FFB800', danger: '#FF4757', info: '#3B82F6'
+    };
+
+    Chart.defaults.font.family = "'Josefin Sans', sans-serif";
+    Chart.defaults.font.size = 13;
+    Chart.defaults.color = '#6B7280';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.padding = 20;
+
+    function renderKPIs() {
+      const totalRevenue = QUOTES.reduce((sum, q) => sum + (q.netAmount || 0), 0);
+
+      // Average discount: based on additional discount only (approval-relevant)
+      const avgDiscount = QUOTES.length > 0
+        ? (QUOTES.reduce((sum, q) => sum + (q.additionalDiscount || 0), 0) / QUOTES.length).toFixed(1)
+        : "0";
+
+      // Average margin: (listAmount - netAmount) / listAmount * 100
+      const totalList = QUOTES.reduce((sum, q) => sum + (q.listAmount || 0), 0);
+      const totalNet = QUOTES.reduce((sum, q) => sum + (q.netAmount || 0), 0);
+      const avgMargin = totalList > 0 ? Math.round(((totalList - totalNet) / totalList) * 100) : 0;
+
+      document.getElementById("kpi-revenue").textContent = formatCurrency(totalRevenue);
+      document.getElementById("kpi-discount").textContent = avgDiscount + "%";
+      document.getElementById("kpi-margin").textContent = avgMargin + "%";
+      document.getElementById("kpi-quotes").textContent = QUOTES.length;
+    }
+
+    // Report 1: Quotes by Status (Doughnut — Sum of Additional Disc. (%))
+    function renderStatusChart() {
+      const data = ANALYTICS.quotesByStatus;
+      const totalDiscountSum = data.reduce((s, d) => s + (d.discountSum || 0), 0);
+
+      // Center text plugin
+      const centerTextPlugin = {
+        id: 'centerText',
+        afterDraw(chart) {
+          const { ctx, width, height } = chart;
+          ctx.save();
+          ctx.font = 'bold 28px "Josefin Sans", sans-serif';
+          ctx.fillStyle = '#1F2937';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(totalDiscountSum, width / 2, height / 2 - 10);
+          ctx.font = '11px "Josefin Sans", sans-serif';
+          ctx.fillStyle = '#9CA3AF';
+          ctx.fillText('Sum of Additional Disc. (%)', width / 2, height / 2 + 14);
+          ctx.restore();
+        }
+      };
+
+      new Chart(document.getElementById("chart-status").getContext("2d"), {
+        type: "doughnut",
+        data: {
+          labels: data.map(d => d.status),
+          datasets: [{ data: data.map(d => d.discountSum || 0), backgroundColor: data.map(d => d.color), borderWidth: 0, hoverOffset: 8 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true, cutout: "65%",
+          plugins: {
+            legend: { position: "right" },
+            tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed } }
+          }
+        },
+        plugins: [centerTextPlugin]
+      });
+    }
+
+    // Report 2: Margin by Opportunity (Vertical Bar — matches Salesforce org)
+    function renderMarginChart() {
+      const data = ANALYTICS.marginByOpportunity;
+      // Shorten long opportunity names for X-axis display
+      const shortLabels = data.map(d => {
+        const name = d.opportunity;
+        return name.length > 18 ? name.substring(0, 16) + '…' : name;
+      });
+      const barColors = data.map(d => {
+        if (d.margin >= 25) return '#3B82F6';
+        if (d.margin >= 15) return '#3B82F6';
+        return '#3B82F6';
+      });
+
+      new Chart(document.getElementById("chart-margin").getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: shortLabels,
+          datasets: [{ label: "Profit Margin %", data: data.map(d => d.margin), backgroundColor: barColors, borderRadius: 6, borderSkipped: false, barPercentage: 0.6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ' Profit Margin: ' + ctx.parsed.y + '%' } }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 20, font: { size: 11 } },
+              title: { display: true, text: 'Opportunity: Opportunity Name', font: { size: 11 }, color: '#9CA3AF' } },
+            y: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { callback: v => v + '%' }, max: 50,
+              title: { display: true, text: 'Average Opportunity: Profit Margin', font: { size: 11 }, color: '#9CA3AF' } }
+          }
+        }
+      });
+    }
+
+    // Report 3: Revenue by Account (Vertical Bar)
+    function renderAccountChart() {
+      const data = ANALYTICS.revenueByAccount;
+      new Chart(document.getElementById("chart-account").getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: data.map(d => d.account),
+          datasets: [{ label: "Revenue ($)", data: data.map(d => d.revenue), backgroundColor: '#3B82F6', borderRadius: 8, borderSkipped: false, barPercentage: 0.6 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + ctx.parsed.y.toLocaleString('en-US') } } },
+          scales: {
+            x: { grid: { display: false },
+              title: { display: true, text: 'Opportunity: Account Name', font: { size: 11 }, color: '#9CA3AF' } },
+            y: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { callback: v => '$' + (v / 1000000).toFixed(1) + 'M' },
+              title: { display: true, text: 'Sum of Opportunity: Amount', font: { size: 11 }, color: '#9CA3AF' } }
+          }
+        }
+      });
+    }
+
+    // Report 4: Revenue by Product (Horizontal Bar)
+    function renderRevenueChart() {
+      const data = ANALYTICS.revenueByProduct;
+      new Chart(document.getElementById("chart-revenue").getContext("2d"), {
+        type: "bar",
+        data: {
+          labels: data.map(r => r.product),
+          datasets: [{ label: "Revenue ($)", data: data.map(r => r.revenue), backgroundColor: '#3B82F6', borderRadius: 8, borderSkipped: false, barPercentage: 0.6 }]
+        },
+        options: {
+          indexAxis: "y", responsive: true, maintainAspectRatio: true,
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' $' + ctx.parsed.x.toLocaleString('en-US') } } },
+          scales: {
+            x: { grid: { color: "rgba(0,0,0,0.04)" }, ticks: { callback: v => '$' + (v / 1000000).toFixed(1) + 'M' },
+              title: { display: true, text: 'Sum of Net Total', font: { size: 11 }, color: '#9CA3AF' } },
+            y: { grid: { display: false },
+              title: { display: true, text: 'Product Name', font: { size: 11 }, color: '#9CA3AF' } }
+          }
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await tryLoadLiveData();
+      renderKPIs();
+      renderStatusChart();
+      renderMarginChart();
+      renderAccountChart();
+      renderRevenueChart();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

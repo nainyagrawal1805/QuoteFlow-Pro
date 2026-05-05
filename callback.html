@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connecting to Salesforce...</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f1117;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2a2d3a;
+      border-radius: 16px;
+      padding: 48px 56px;
+      text-align: center;
+      max-width: 440px;
+      width: 90%;
+    }
+    .logo {
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #00a3ff;
+      margin-bottom: 32px;
+      font-weight: 600;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid #2a2d3a;
+      border-top-color: #00a3ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 28px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 10px; }
+    p { font-size: 14px; color: #8b8fa8; line-height: 1.6; }
+    .status { margin-top: 24px; font-size: 13px; color: #00a3ff; min-height: 20px; }
+    .success { color: #00d084; }
+    .error-msg { color: #ff4d6d; }
+    .checkmark {
+      width: 48px; height: 48px;
+      background: #00d08422;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      font-size: 22px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">QuoteFlow Pro</div>
+    <div class="spinner" id="spinner"></div>
+    <div class="checkmark" id="checkmark">✓</div>
+    <h1 id="title">Connecting to Salesforce</h1>
+    <p id="subtitle">Exchanging authorization code for access token...</p>
+    <div class="status" id="status">Please wait...</div>
+  </div>
+
+  <script>
+    // ── CONFIG — paste your values here ──
+   const CLIENT_ID = 'YOUR_SALESFORCE_CLIENT_ID';
+const CLIENT_SECRET = 'YOUR_SALESFORCE_CLIENT_SECRET';
+    const REDIRECT_URI = "http://localhost:8081/callback.html";
+    // ─────────────────────────────────────
+
+    const setStatus = (msg, type = "") => {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = "status " + type;
+    };
+
+    const showSuccess = () => {
+      document.getElementById("spinner").style.display = "none";
+      const check = document.getElementById("checkmark");
+      check.style.display = "flex";
+      document.getElementById("title").textContent = "Connected!";
+      document.getElementById("subtitle").textContent = "Redirecting to portal...";
+      setStatus("Authentication successful ✓", "success");
+    };
+
+    const showError = (msg) => {
+      document.getElementById("spinner").style.display = "none";
+      document.getElementById("title").textContent = "Connection Failed";
+      document.getElementById("subtitle").textContent = msg;
+      setStatus("Please close this and try again.", "error-msg");
+    };
+
+    console.log("Retrieved verifier:", sessionStorage.getItem("sf_code_verifier"));
+    async function handleCallback() {
+      const params = new URLSearchParams(window.location.search);
+      const code  = params.get("code");
+      const error = params.get("error");
+
+      if (error) { showError("Salesforce returned: " + error); return; }
+      if (!code)  { showError("No authorization code found in URL."); return; }
+
+      setStatus("Authorization code received. Fetching token...");
+
+      try {
+        const tokenRes = await fetch(
+  "/token",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+              grant_type:    "authorization_code",
+              code:          code,
+              client_id:     CLIENT_ID,
+              client_secret: CLIENT_SECRET,
+              redirect_uri:  REDIRECT_URI,
+}),
+          }
+        );
+
+        const tokenData = await tokenRes.json();
+
+        if (tokenData.error) {
+          showError("Token error: " + tokenData.error_description);
+          return;
+        }
+
+        sessionStorage.setItem("sf_access_token", tokenData.access_token);
+        sessionStorage.setItem("sf_instance_url", tokenData.instance_url);
+        sessionStorage.setItem("sf_token_type",   tokenData.token_type);
+
+        showSuccess();
+        setTimeout(() => { window.location.href = "index.html"; }, 1500);
+
+      } catch (err) {
+        showError("Network error. Is Live Server running?");
+        console.error(err);
+      }
+    }
+
+    handleCallback();
+  </script>
+</body>
+</html>

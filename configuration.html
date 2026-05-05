@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="QuoteFlow Pro Configuration — View product pricing, volume discount rules, and approval workflow settings.">
+  <title>Configuration — QuoteFlow Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <nav class="navbar" id="main-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand"><div class="brand-icon"><i data-lucide="bolt"></i></div>QuoteFlow Pro</a>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="calculator.html" class="nav-link">Calculator</a></li>
+        <li><a href="approval.html" class="nav-link">Approvals</a></li>
+        <li><a href="dashboards.html" class="nav-link">Dashboard</a></li>
+        <li><a href="customers.html" class="nav-link">Customers</a></li>
+        <li><a href="configuration.html" class="nav-link">Configuration</a></li>
+      </ul>
+      <button class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Configuration</span></div>
+      <h1>System Configuration</h1>
+      <p style="color: var(--text-on-dark); opacity: 0.8; font-size: var(--fs-md); margin-top: var(--space-sm); position: relative;">Business rules powering the NovaSync CPQ engine</p>
+    </div>
+  </div>
+
+  <!-- Section 1: Product Pricing -->
+  <section class="section" style="padding-bottom:0;">
+    <div class="container">
+      <div class="section-header fade-in">
+        <div class="section-label">Section 1</div>
+        <h2 class="section-title">Product Pricing</h2>
+        <p class="section-subtitle">All active products and their list pricing in the QuoteFlow catalog.</p>
+      </div>
+      <div class="table-wrapper fade-in">
+        <div class="table-header">
+          <h3><i data-lucide="package" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"></i>Product Pricing Table</h3>
+        </div>
+        <table>
+          <thead><tr><th>Product Name</th><th>Product Code</th><th>Unit Price</th><th>Family</th></tr></thead>
+          <tbody id="config-product-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Volume Discount Rules -->
+  <section class="section" style="padding-bottom:0;">
+    <div class="container">
+      <div class="section-header fade-in">
+        <div class="section-label">Section 2</div>
+        <h2 class="section-title">Volume Discount Rules</h2>
+        <p class="section-subtitle">Automatic discount tiers applied based on order quantity.</p>
+      </div>
+      <div class="grid-3 fade-in" id="discount-tier-cards"></div>
+    </div>
+  </section>
+
+  <!-- Section 3: Approval Workflow -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header fade-in">
+        <div class="section-label">Section 3</div>
+        <h2 class="section-title">Approval Workflow Rules</h2>
+        <p class="section-subtitle">Multi-level approval chain triggered by additional discount percentage.</p>
+      </div>
+      <div class="config-flow fade-in" id="approval-flow"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text">&copy; 2026 <strong>NovaSync Solutions</strong> — QuoteFlow Pro. Built with Salesforce CPQ.</div>
+      <div class="footer-links">
+        <a href="catalog.html">Catalog</a><a href="calculator.html">Calculator</a><a href="approval.html">Approvals</a><a href="dashboards.html">Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script>
+    const productFamily = { "P001":"Software", "P002":"Software", "P003":"Software", "P004":"Support" };
+
+    function renderProductTable() {
+      document.getElementById("config-product-table").innerHTML = PRODUCTS.map(p => `
+        <tr>
+          <td><strong>${p.name}</strong></td>
+          <td><code style="background:var(--bg);padding:3px 8px;border-radius:4px;font-size:0.8rem;">${p.code}</code></td>
+          <td style="font-weight:600;color:var(--accent);">${formatCurrency(p.price)}</td>
+          <td><span class="config-family-badge">${productFamily[p.id] || "Other"}</span></td>
+        </tr>`).join("");
+    }
+
+    function renderDiscountTiers() {
+      const tierIcons = ["layers", "trending-up", "crown"];
+      const tierColors = ["var(--info)", "var(--warning)", "var(--success)"];
+      const tierBgs = ["var(--info-light)", "var(--warning-light)", "var(--success-light)"];
+
+      document.getElementById("discount-tier-cards").innerHTML = DISCOUNT_RULES.map((rule, i) => {
+        const maxLabel = rule.maxQty === null ? "∞" : formatNumber(rule.maxQty);
+        return `<div class="config-tier-card">
+          <div class="config-tier-icon" style="background:${tierBgs[i]};color:${tierColors[i]};">
+            <i data-lucide="${tierIcons[i]}" style="width:28px;height:28px"></i>
+          </div>
+          <div class="config-tier-name">${rule.tier.charAt(0).toUpperCase() + rule.tier.slice(1)}</div>
+          <div class="config-tier-discount">${rule.volumeDiscount}% Off</div>
+          <div class="config-tier-range">Qty ${formatNumber(rule.minQty)} – ${maxLabel}</div>
+          <div class="config-tier-label">${rule.label}</div>
+          <div class="config-tier-bar">
+            <div class="config-tier-bar-fill" style="width:${Math.max(rule.volumeDiscount * 4, 10)}%;background:${tierColors[i]};"></div>
+          </div>
+        </div>`;
+      }).join("");
+      lucide.createIcons();
+    }
+
+    function renderApprovalFlow() {
+      const flowIcons = ["check-circle", "user-check", "shield-check"];
+      const flowColors = ["var(--success)", "#B8860B", "var(--danger)"];
+      const flowBgs = ["var(--success-light)", "var(--warning-light)", "var(--danger-light)"];
+
+      const approverMap = { "Auto": null, "L1": APPROVERS[0], "L2": APPROVERS[1] };
+
+      const cards = APPROVAL_RULES.map((rule, i) => {
+        const approver = approverMap[rule.level];
+        const maxLabel = rule.max === 100 ? "50%+" : rule.max + "%";
+        return `<div class="config-approval-card">
+          <div class="config-approval-icon" style="background:${flowBgs[i]};color:${flowColors[i]};">
+            <i data-lucide="${flowIcons[i]}" style="width:32px;height:32px"></i>
+          </div>
+          <div class="config-approval-level" style="color:${flowColors[i]};">${rule.level}</div>
+          <div class="config-approval-range">${rule.min}% – ${maxLabel} additional discount</div>
+          <div class="config-approval-label">${rule.label}</div>
+          ${approver ? `<div class="config-approval-approver">
+            <i data-lucide="user" style="width:14px;height:14px"></i>
+            <div>
+              <div style="font-weight:600;font-size:0.875rem;">${approver.name}</div>
+              <div style="font-size:0.75rem;color:var(--text-secondary);">${approver.role}</div>
+            </div>
+          </div>` : `<div class="config-approval-approver" style="color:var(--success);"><i data-lucide="zap" style="width:14px;height:14px"></i><span style="font-weight:600;font-size:0.875rem;">System Auto-Approval</span></div>`}
+        </div>`;
+      });
+
+      const arrows = APPROVAL_RULES.slice(0, -1).map(() =>
+        `<div class="config-flow-arrow"><i data-lucide="arrow-right" style="width:24px;height:24px;color:var(--text-light);"></i></div>`
+      );
+
+      let html = "";
+      cards.forEach((card, i) => {
+        html += card;
+        if (i < arrows.length) html += arrows[i];
+      });
+
+      document.getElementById("approval-flow").innerHTML = html;
+      lucide.createIcons();
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await tryLoadLiveData();
+      renderProductTable();
+      renderDiscountTiers();
+      renderApprovalFlow();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="QuoteFlow Pro Quote Calculator — Build quotes with live pricing, volume discounts, and approval indicators.">
+  <title>Quote Calculator — QuoteFlow Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <nav class="navbar" id="main-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand"><div class="brand-icon"><i data-lucide="bolt"></i></div>QuoteFlow Pro</a>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="calculator.html" class="nav-link">Calculator</a></li>
+        <li><a href="approval.html" class="nav-link">Approvals</a></li>
+        <li><a href="dashboards.html" class="nav-link">Dashboard</a></li>
+        <li><a href="customers.html" class="nav-link">Customers</a></li>
+        <li><a href="configuration.html" class="nav-link">Configuration</a></li>
+      </ul>
+      <button class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Quote Calculator</span></div>
+      <h1>Quote Calculator</h1>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="container">
+      <div class="calc-layout fade-in">
+        <div class="calc-panel">
+          <h2><i data-lucide="settings" style="width:20px;height:20px;vertical-align:middle;margin-right:8px"></i>Configure Quote</h2>
+          <div class="form-group">
+            <label class="form-label" for="product-select">Select Product</label>
+            <select class="form-select" id="product-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quantity</label>
+            <div class="qty-stepper">
+              <button id="qty-minus" type="button">−</button>
+              <input type="number" id="qty-input" value="1" min="1" max="9999">
+              <button id="qty-plus" type="button">+</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Volume Discount Tier</label>
+            <div class="tier-indicator">
+              <div class="tier-segment" id="tier-0"></div>
+              <div class="tier-segment" id="tier-1"></div>
+              <div class="tier-segment" id="tier-2"></div>
+            </div>
+            <div class="tier-labels">
+              <span id="tier-label-0">Standard (0%)</span>
+              <span id="tier-label-1">Volume (10%)</span>
+              <span id="tier-label-2">Enterprise (20%)</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="additional-discount">Additional Discount (%)</label>
+            <input type="number" class="form-input" id="additional-discount" value="0" min="0" max="50" placeholder="0">
+          </div>
+          <div class="approval-indicator none" id="approval-indicator">
+            <i data-lucide="check-circle" style="width:18px;height:18px"></i>
+            <span id="approval-text">Auto-approved — standard discount</span>
+          </div>
+          <button class="btn btn-success btn-lg mt-xl" id="generate-quote-btn" style="width:100%">
+            <i data-lucide="file-text" style="width:18px;height:18px"></i> Generate Quote
+          </button>
+        </div>
+
+        <div>
+          <div class="calc-panel">
+            <h2><i data-lucide="receipt" style="width:20px;height:20px;vertical-align:middle;margin-right:8px"></i>Price Breakdown</h2>
+            <div class="price-row"><span class="label">Product</span><span class="value" id="display-product">—</span></div>
+            <div class="price-row"><span class="label">List Price</span><span class="value" id="display-list-price">$0</span></div>
+            <div class="price-row"><span class="label">Quantity</span><span class="value" id="display-qty">0</span></div>
+            <div class="price-row"><span class="label">Subtotal</span><span class="value" id="display-subtotal">$0</span></div>
+            <div class="price-row"><span class="label">Volume Discount</span><span class="value text-success" id="display-volume-discount">0%</span></div>
+            <div class="price-row"><span class="label">Additional Discount</span><span class="value text-warning" id="display-additional-discount">0%</span></div>
+            <div class="price-row"><span class="label">Total Discount</span><span class="value text-accent" id="display-total-discount">0%</span></div>
+            <div class="price-row"><span class="label">Discount Amount</span><span class="value text-danger" id="display-discount-amount">−$0</span></div>
+            <div class="price-row total"><span class="label">Net Price</span><span class="value" id="display-net-price">$0</span></div>
+          </div>
+          <div class="quote-summary" id="quote-summary">
+            <h3><i data-lucide="file-check" style="width:20px;height:20px;vertical-align:middle;margin-right:8px"></i>Quote Generated Successfully</h3>
+            <div id="quote-summary-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text">&copy; 2026 <strong>NovaSync Solutions</strong> — QuoteFlow Pro. Built with Salesforce CPQ.</div>
+      <div class="footer-links">
+        <a href="catalog.html">Catalog</a><a href="calculator.html">Calculator</a><a href="approval.html">Approvals</a><a href="dashboards.html">Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script>
+    let selectedProduct = PRODUCTS[0];
+    let quantity = 1;
+    let additionalDiscount = 0;
+
+    function initProductSelector() {
+      const select = document.getElementById("product-select");
+      select.innerHTML = PRODUCTS.map(p => `<option value="${p.id}">${p.name} — ${formatCurrency(p.price)}/license</option>`).join("");
+      const params = new URLSearchParams(window.location.search);
+      const productParam = params.get("product");
+      if (productParam) {
+        const found = PRODUCTS.find(p => p.id === productParam);
+        if (found) { select.value = found.id; selectedProduct = found; }
+      }
+      select.addEventListener("change", (e) => { selectedProduct = PRODUCTS.find(p => p.id === e.target.value); updateCalculator(); });
+    }
+
+    function initQuantityControls() {
+      const input = document.getElementById("qty-input");
+      input.addEventListener("input", (e) => { quantity = Math.max(1, parseInt(e.target.value) || 1); e.target.value = quantity; updateCalculator(); });
+      document.getElementById("qty-minus").addEventListener("click", () => { quantity = Math.max(1, quantity - 1); input.value = quantity; updateCalculator(); });
+      document.getElementById("qty-plus").addEventListener("click", () => { quantity = Math.min(9999, quantity + 1); input.value = quantity; updateCalculator(); });
+    }
+
+    function initAdditionalDiscount() {
+      document.getElementById("additional-discount").addEventListener("input", (e) => { additionalDiscount = Math.min(50, Math.max(0, parseFloat(e.target.value) || 0)); updateCalculator(); });
+    }
+
+    function updateCalculator() {
+      const tier = getDiscountTier(quantity);
+      const volumeDiscount = tier.discount;
+      const totalDiscount = Math.min(volumeDiscount + additionalDiscount, 100);
+      const subtotal = selectedProduct.price * quantity;
+      const discountAmount = subtotal * (totalDiscount / 100);
+      const netPrice = subtotal - discountAmount;
+      // Approval is based ONLY on additional discount, not volume+additional
+      const approval = getApprovalLevel(additionalDiscount);
+
+      document.getElementById("display-product").textContent = selectedProduct.name;
+      document.getElementById("display-list-price").textContent = formatCurrency(selectedProduct.price);
+      document.getElementById("display-qty").textContent = formatNumber(quantity);
+      document.getElementById("display-subtotal").textContent = formatCurrency(subtotal);
+      document.getElementById("display-volume-discount").textContent = `−${volumeDiscount}%`;
+      document.getElementById("display-additional-discount").textContent = `−${additionalDiscount}%`;
+      document.getElementById("display-total-discount").textContent = `−${totalDiscount}%`;
+      document.getElementById("display-discount-amount").textContent = `−${formatCurrency(discountAmount)}`;
+      document.getElementById("display-net-price").textContent = formatCurrency(netPrice);
+
+      DISCOUNT_TIERS.forEach((t, i) => {
+        document.getElementById(`tier-${i}`).classList.toggle("active", DISCOUNT_TIERS.indexOf(t) <= DISCOUNT_TIERS.indexOf(tier));
+        document.getElementById(`tier-label-${i}`).classList.toggle("active", t.label === tier.label);
+      });
+
+      const indicator = document.getElementById("approval-indicator");
+      const levelClass = approval.level === "Auto" ? "none" : approval.level.toLowerCase();
+      indicator.className = "approval-indicator " + levelClass;
+      document.getElementById("approval-text").textContent = approval.label;
+      lucide.createIcons();
+    }
+
+    function initGenerateQuote() {
+      document.getElementById("generate-quote-btn").addEventListener("click", () => {
+        const tier = getDiscountTier(quantity);
+        const totalDiscount = Math.min(tier.discount + additionalDiscount, 100);
+        const subtotal = selectedProduct.price * quantity;
+        const netPrice = subtotal * (1 - totalDiscount / 100);
+        // Approval based ONLY on additional discount
+        const approval = getApprovalLevel(additionalDiscount);
+        const quoteId = `Q-${String(Math.floor(Math.random() * 90000) + 10000).padStart(5, '0')}`;
+        const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+        document.getElementById("quote-summary-content").innerHTML = `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div><div style="font-size:0.75rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.08em;">Quote ID</div><div style="font-weight:600;font-size:1.1rem;">${quoteId}</div></div>
+            <div><div style="font-size:0.75rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.08em;">Date</div><div style="font-weight:600;">${today}</div></div>
+            <div><div style="font-size:0.75rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.08em;">Product</div><div style="font-weight:600;">${selectedProduct.name}</div></div>
+            <div><div style="font-size:0.75rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.08em;">Quantity</div><div style="font-weight:600;">${formatNumber(quantity)}</div></div>
+            <div><div style="font-size:0.75rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.08em;">Additional Discount</div><div style="font-weight:600;">${additionalDiscount}%</div></div>
+            <div><div style="font-size:0.75rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.08em;">Approval</div><div style="font-weight:600;">${approval.level === "Auto" ? "Auto-Approved" : approval.level + " Required"}</div></div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.15);padding-top:16px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:1rem;font-weight:500;">Net Total</span>
+            <span style="font-size:1.5rem;font-weight:700;">${formatCurrency(netPrice)}</span>
+          </div>`;
+
+        const summary = document.getElementById("quote-summary");
+        summary.classList.add("visible");
+        summary.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        lucide.createIcons();
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await tryLoadLiveData();
+      initProductSelector();
+      initQuantityControls();
+      initAdditionalDiscount();
+      initGenerateQuote();
+      updateCalculator();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

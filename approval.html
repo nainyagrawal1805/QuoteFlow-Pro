@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="QuoteFlow Pro Approvals Dashboard — Track quote statuses, filter by approval state, and view detailed approval timelines.">
+  <title>Approvals — QuoteFlow Pro</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <nav class="navbar" id="main-navbar">
+    <div class="container">
+      <a href="index.html" class="nav-brand"><div class="brand-icon"><i data-lucide="bolt"></i></div>QuoteFlow Pro</a>
+      <ul class="nav-menu" id="nav-menu">
+        <li><a href="index.html" class="nav-link">Home</a></li>
+        <li><a href="catalog.html" class="nav-link">Catalog</a></li>
+        <li><a href="calculator.html" class="nav-link">Calculator</a></li>
+        <li><a href="approval.html" class="nav-link">Approvals</a></li>
+        <li><a href="dashboards.html" class="nav-link">Dashboard</a></li>
+        <li><a href="customers.html" class="nav-link">Customers</a></li>
+        <li><a href="configuration.html" class="nav-link">Configuration</a></li>
+      </ul>
+      <button class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container">
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Approvals</span></div>
+      <h1>Approval Dashboard</h1>
+    </div>
+  </div>
+
+  <section class="section" style="padding-bottom: 0;">
+    <div class="container">
+      <div class="kpi-grid fade-in" id="approval-stats"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="table-wrapper fade-in">
+        <div class="table-header">
+          <h3>All Quotes</h3>
+          <div class="filter-bar" id="filter-bar">
+            <button class="filter-btn active" data-filter="All">All</button>
+            <button class="filter-btn" data-filter="Draft">Draft</button>
+            <button class="filter-btn" data-filter="In Review">In Review</button>
+            <button class="filter-btn" data-filter="Approved">Approved</button>
+            <button class="filter-btn" data-filter="Rejected">Rejected</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Quote #</th><th>Customer</th><th>Product</th><th>Amount</th><th>Discount %</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="quotes-table"></tbody>
+        </table>
+      </div>
+      <div class="rules-panel fade-in">
+        <h3><i data-lucide="shield-check" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"></i>Approval Flow Rules</h3>
+        <div id="rules-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="side-panel-overlay" id="panel-overlay"></div>
+  <div class="side-panel" id="side-panel">
+    <div class="side-panel-header">
+      <h3 id="panel-title">Quote Details</h3>
+      <button class="close-panel" id="close-panel"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+    </div>
+    <div class="side-panel-body" id="panel-body"></div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-text">&copy; 2026 <strong>NovaSync Solutions</strong> — QuoteFlow Pro. Built with Salesforce CPQ.</div>
+      <div class="footer-links">
+        <a href="catalog.html">Catalog</a><a href="calculator.html">Calculator</a><a href="approval.html">Approvals</a><a href="dashboards.html">Dashboard</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="api.js"></script>
+  <script>
+    const statusClassMap = { "Draft":"badge-draft", "In Review":"badge-review", "Approved":"badge-approved", "Rejected":"badge-rejected" };
+    let customerFilter = null;
+
+    function initCustomerFilter() {
+      const params = new URLSearchParams(window.location.search);
+      customerFilter = params.get("customer");
+      if (customerFilter) {
+        const banner = document.createElement("div");
+        banner.className = "info-banner";
+        banner.style.marginBottom = "var(--space-xl)";
+        banner.innerHTML = `<div class="info-icon"><i data-lucide="filter" style="width:20px;height:20px"></i></div><div><h4>Filtered by Customer: ${customerFilter}</h4><p>Showing quotes for this customer only. <a href="approval.html" style="color:var(--accent);font-weight:600;">Clear filter →</a></p></div>`;
+        document.getElementById("approval-stats").parentElement.insertBefore(banner, document.getElementById("approval-stats"));
+      }
+    }
+
+    function renderApprovalStats() {
+      const counts = {
+        total: QUOTES.length,
+        pending: QUOTES.filter(q => q.status === "In Review" || q.status === "Draft").length,
+        approved: QUOTES.filter(q => q.status === "Approved").length,
+        rejected: QUOTES.filter(q => q.status === "Rejected").length
+      };
+      document.getElementById("approval-stats").innerHTML = `
+        <div class="kpi-card"><div class="kpi-label">Total Quotes</div><div class="kpi-value">${counts.total}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pending Review</div><div class="kpi-value" style="color:var(--warning)">${counts.pending}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Approved</div><div class="kpi-value" style="color:var(--success)">${counts.approved}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Rejected</div><div class="kpi-value" style="color:var(--danger)">${counts.rejected}</div></div>`;
+    }
+
+    function renderQuotesTable(filter) {
+      filter = filter || "All";
+      let filtered = filter === "All" ? QUOTES : QUOTES.filter(q => q.status === filter);
+      if (customerFilter) filtered = filtered.filter(q => q.customer.toLowerCase().includes(customerFilter.toLowerCase()));
+      const tbody = document.getElementById("quotes-table");
+      tbody.innerHTML = filtered.map(q => {
+        return `<tr class="clickable" data-quote-id="${q.id}">
+          <td><strong>${q.id}</strong></td>
+          <td>${q.customer}</td>
+          <td>${q.product}</td>
+          <td>${formatCurrency(q.netAmount)}</td>
+          <td>${q.additionalDiscount || 0}%</td>
+          <td><span class="badge ${statusClassMap[q.status]}">${q.status}</span></td>
+          <td>${formatDate(q.submittedDate)}</td>
+        </tr>`;
+      }).join("");
+
+      tbody.querySelectorAll("tr.clickable").forEach(row => {
+        row.addEventListener("click", () => {
+          const quote = QUOTES.find(q => q.id === row.dataset.quoteId);
+          if (quote) openSidePanel(quote);
+        });
+      });
+    }
+
+    function initFilters() {
+      document.getElementById("filter-bar").querySelectorAll(".filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          renderQuotesTable(btn.dataset.filter);
+        });
+      });
+    }
+
+    function openSidePanel(quote) {
+      const history = APPROVAL_HISTORY.find(h => h.quoteId === quote.id);
+
+      document.getElementById("panel-title").textContent = `Quote ${quote.id}`;
+      let html = `<div style="margin-bottom:var(--space-xl);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Customer</div><div style="font-weight:600;">${quote.customer}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Product</div><div style="font-weight:600;">${quote.product}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Net Amount</div><div style="font-weight:600;">${formatCurrency(quote.netAmount)}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Discount</div><div style="font-weight:600;">${quote.additionalDiscount || 0}%</div></div>
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Status</div><span class="badge ${statusClassMap[quote.status]}">${quote.status}</span></div>
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Approval Level</div><div style="font-weight:600;">${quote.approvalLevel || "N/A"}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Approver</div><div style="font-weight:600;">${quote.approver || "—"}</div></div>
+          <div><div style="font-size:0.75rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Opportunity</div><div style="font-weight:600;">${quote.opportunityName}</div></div>
+        </div>
+        ${quote.notes ? `<div style="padding:12px;background:var(--bg);border-radius:8px;font-size:0.875rem;color:var(--text-secondary);margin-bottom:20px;"><strong>Notes:</strong> ${quote.notes}</div>` : ''}
+      </div>`;
+
+      if (history) {
+        html += `<h4 style="font-size:0.875rem;font-weight:600;margin-bottom:var(--space-lg);padding-bottom:var(--space-sm);border-bottom:1px solid var(--border);">Approval Timeline</h4>
+        <div class="timeline">
+          ${history.steps.map(step => {
+            let dotClass = '';
+            if (step.status === "Completed" || step.status === "Approved") dotClass = 'completed';
+            else if (step.status === "Escalated") dotClass = 'completed';
+            else if (step.status === "Pending") dotClass = 'current';
+            else if (step.status === "Rejected") dotClass = 'rejected';
+            return `<div class="timeline-item"><div class="timeline-dot ${dotClass}"></div><div class="timeline-title">${step.step}</div><div class="timeline-meta"><strong>${step.actor}</strong> · ${step.date ? formatDate(step.date) : "Pending"}<br><span style="color:var(--text-secondary)">${step.comment}</span></div></div>`;
+          }).join("")}
+        </div>`;
+      }
+
+      document.getElementById("panel-body").innerHTML = html;
+      document.getElementById("side-panel").classList.add("open");
+      document.getElementById("panel-overlay").classList.add("active");
+    }
+
+    function closeSidePanel() {
+      document.getElementById("side-panel").classList.remove("open");
+      document.getElementById("panel-overlay").classList.remove("active");
+    }
+
+    function renderApprovalRules() {
+      document.getElementById("rules-list").innerHTML = APPROVAL_RULES.map(rule => {
+        const levelClass = rule.level === "Auto" ? "none" : rule.level.toLowerCase();
+        return `<div class="rule-item"><span class="rule-level ${levelClass}">${rule.level}</span><span class="rule-desc">${rule.min}%–${rule.max === 100 ? '50%+' : rule.max + '%'} discount → ${rule.label}</span></div>`;
+      }).join("");
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await tryLoadLiveData();
+      initCustomerFilter();
+      renderApprovalStats();
+      renderQuotesTable();
+      initFilters();
+      renderApprovalRules();
+      document.getElementById("close-panel").addEventListener("click", closeSidePanel);
+      document.getElementById("panel-overlay").addEventListener("click", closeSidePanel);
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
